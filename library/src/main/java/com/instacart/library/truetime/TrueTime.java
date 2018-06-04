@@ -2,6 +2,7 @@ package com.instacart.library.truetime;
 
 import android.content.Context;
 import android.os.SystemClock;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
@@ -49,6 +50,11 @@ public class TrueTime {
         DISK_CACHE_CLIENT.clearCachedInfo(context);
     }
 
+    public void forceInitialize() throws IOException {
+        forceInitialize(_ntpHost);
+        saveTrueTimeInfoToDisk();
+    }
+
     public void initialize() throws IOException {
         initialize(_ntpHost);
         saveTrueTimeInfoToDisk();
@@ -70,10 +76,10 @@ public class TrueTime {
 
     public synchronized TrueTime withRootDelayMax(float rootDelayMax) {
         if (rootDelayMax > _rootDelayMax) {
-          String log = String.format(Locale.getDefault(),
-              "The recommended max rootDelay value is %f. You are setting it at %f",
-              _rootDelayMax, rootDelayMax);
-          TrueLog.w(TAG, log);
+            String log = String.format(Locale.getDefault(),
+                    "The recommended max rootDelay value is %f. You are setting it at %f",
+                    _rootDelayMax, rootDelayMax);
+            TrueLog.w(TAG, log);
         }
 
         _rootDelayMax = rootDelayMax;
@@ -81,15 +87,15 @@ public class TrueTime {
     }
 
     public synchronized TrueTime withRootDispersionMax(float rootDispersionMax) {
-      if (rootDispersionMax > _rootDispersionMax) {
-        String log = String.format(Locale.getDefault(),
-            "The recommended max rootDispersion value is %f. You are setting it at %f",
-            _rootDispersionMax, rootDispersionMax);
-        TrueLog.w(TAG, log);
-      }
+        if (rootDispersionMax > _rootDispersionMax) {
+            String log = String.format(Locale.getDefault(),
+                    "The recommended max rootDispersion value is %f. You are setting it at %f",
+                    _rootDispersionMax, rootDispersionMax);
+            TrueLog.w(TAG, log);
+        }
 
-      _rootDispersionMax = rootDispersionMax;
-      return INSTANCE;
+        _rootDispersionMax = rootDispersionMax;
+        return INSTANCE;
     }
 
     public synchronized TrueTime withServerResponseDelayMax(int serverResponseDelayInMillis) {
@@ -109,6 +115,10 @@ public class TrueTime {
 
     // -----------------------------------------------------------------------------------
 
+    protected void forceInitialize(String ntpHost) throws IOException {
+        requestTime(ntpHost);
+    }
+
     protected void initialize(String ntpHost) throws IOException {
         if (isInitialized()) {
             TrueLog.i(TAG, "---- TrueTime already initialized from previous boot/init");
@@ -120,10 +130,10 @@ public class TrueTime {
 
     long[] requestTime(String ntpHost) throws IOException {
         return SNTP_CLIENT.requestTime(ntpHost,
-            _rootDelayMax,
-            _rootDispersionMax,
-            _serverResponseDelayMax,
-            _udpSocketTimeoutInMillis);
+                _rootDelayMax,
+                _rootDispersionMax,
+                _serverResponseDelayMax,
+                _udpSocketTimeoutInMillis);
     }
 
     synchronized static void saveTrueTimeInfoToDisk() {
@@ -140,8 +150,8 @@ public class TrueTime {
 
     private static long _getCachedDeviceUptime() {
         long cachedDeviceUptime = SNTP_CLIENT.wasInitialized()
-                                  ? SNTP_CLIENT.getCachedDeviceUptime()
-                                  : DISK_CACHE_CLIENT.getCachedDeviceUptime();
+                ? SNTP_CLIENT.getCachedDeviceUptime()
+                : DISK_CACHE_CLIENT.getCachedDeviceUptime();
 
         if (cachedDeviceUptime == 0L) {
             throw new RuntimeException("expected device time from last boot to be cached. couldn't find it.");
@@ -152,8 +162,8 @@ public class TrueTime {
 
     private static long _getCachedSntpTime() {
         long cachedSntpTime = SNTP_CLIENT.wasInitialized()
-                              ? SNTP_CLIENT.getCachedSntpTime()
-                              : DISK_CACHE_CLIENT.getCachedSntpTime();
+                ? SNTP_CLIENT.getCachedSntpTime()
+                : DISK_CACHE_CLIENT.getCachedSntpTime();
 
         if (cachedSntpTime == 0L) {
             throw new RuntimeException("expected SNTP time from last boot to be cached. couldn't find it.");
